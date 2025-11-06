@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>התחברות למערכת</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f6fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px 45px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 380px;
+      text-align: right;
+      transition: all 0.3s ease;
+    }
+
+    .login-card:hover {
+      box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 35px;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .input-container {
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-size: 15px;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      box-sizing: border-box;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 14px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.1s;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+
+    button[type="submit"]:active {
+      transform: scale(0.98);
+    }
+
+    .links-container {
+      margin-top: 25px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .links-container a {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .links-container a:hover {
+      text-decoration: underline;
+    }
+
+    .links-container p {
+      color: #777;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <form class="login-card">
+    <h2>התחברות למערכת</h2>
+
+    <div class="input-container">
+      <label for="email">אימייל:</label>
+      <input type="email" id="email" name="email" required placeholder="example@domain.com">
+    </div>
+
+    <div class="input-container">
+      <label for="password">סיסמה:</label>
+      <input type="password" id="password" name="password" required placeholder="••••••••">
+    </div>
+
+    <button type="submit">התחבר</button>
+
+    <div class="links-container">
+      <a href="#">שכחתי סיסמה?</a>
+      <p>אין לך חשבון? <a href="#">הירשם כאן</a></p>
+    </div>
+  </form>
+
+</body>
+</html>
