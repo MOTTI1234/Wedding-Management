@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('password');
     const emailError = document.getElementById('emailError');
     const passwordError = document.getElementById('passwordError');
+    
+    // ביישום אמיתי, מומלץ להציג הודעת שגיאה כללית בטופס (נוסיף כאן placeholder)
+    // const formMessage = document.getElementById('formMessage'); 
 
     // רג'קס בסיסי לבדיקת תבנית אימייל
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
@@ -13,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function validateForm() {
         let isValid = true;
+        // formMessage.textContent = ''; // נקה הודעה כללית
 
         // אימות אימייל
         if (!emailPattern.test(emailInput.value)) {
@@ -32,25 +36,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return isValid;
     }
+    
+    // פונקציה אסינכרונית לשליחת הנתונים לשרת
+    async function submitLoginForm(email, password) {
+        // ביישום אמיתי: כאן ניתן להפעיל אינדיקטור טעינה ולנטרל את כפתור השליחה
+        
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (response.ok) { // קוד סטטוס 200-299: הצלחה
+                console.log('Login successful on server. Redirecting...');
+                // ** ניתוב לדף הבית לאחר אישור השרת **
+                window.location.href = 'homePage.html'; 
+            } else {
+                // קוד סטטוס 4xx: כשלון אימות (לדוגמה: 401 Unauthorized)
+                const errorData = await response.json().catch(() => ({})); // מנסה לקרוא גוף, אם נכשל מחזיר אובייקט ריק
+                
+                const errorMessage = errorData.message || 'שם משתמש או סיסמה שגויים. נסה שוב.';
+                alert(`Login failed: ${errorMessage}`);
+                // formMessage.textContent = errorMessage; // הצגת הודעה כללית בטופס
+            }
+        } catch (error) {
+            // שגיאות רשת או שרת שאינן קשורות לתגובה (לדוגמה, השרת לא זמין)
+            console.error('Network or server error:', error);
+            alert('אירעה שגיאה בחיבור לשרת. נסה שוב מאוחר יותר.');
+        } finally {
+            // ביישום אמיתי: כאן ניתן לנטרל את אינדיקטור הטעינה ולהפעיל מחדש את כפתור השליחה
+        }
+    }
 
     form.addEventListener('submit', function(event) {
-        event.preventDefault(); // חובה למנוע את השליחה המקורית של הטופס
+        event.preventDefault(); // מונע שליחת טופס רגילה
 
         if (validateForm()) {
-            // --- לוגיקת ניתוב לאחר אימות צד-לקוח מוצלח ---
-
-            // *הערה: ביישום אמיתי, כאן היית שולח את הנתונים לשרת 
-            // באמצעות Fetch API, ומבצע את הניתוב רק אם השרת החזיר הצלחה.
-            
-            // מכיוון שאנחנו עושים רק אימות לקוח:
-            
-            console.log('Client-side validation successful. Redirecting...');
-            
-            // ניתוב לדף homePage.html
-            window.location.href = 'homePage.html'; 
-            
-        } else {
-            console.log('Client-side validation failed.');
+            // אם האימות בצד הלקוח הצליח, שולחים לשרת
+            submitLoginForm(emailInput.value, passwordInput.value);
         }
     });
 });
