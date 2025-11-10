@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="he">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>טופס הרשמה — חתונה</title>
+
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card" role="region" aria-labelledby="title">
+      <h1 id="title">הרשמה לשירות ניהול החתונה</h1>
+      <p class="lead">צור חשבון לשיתוף משימות, לוחות זמנים ותיאומים עם שותפים להפקה.</p>
+
+      <form id="regForm" novalidate>
+        <div class="full">
+          <label for="fullName">שם מלא</label>
+          <input id="fullName" name="fullName" type="text" autocomplete="name" required aria-required="true" />
+          <div id="fullNameError" class="msg error" role="alert" hidden>יש להזין שם מלא.</div>
+        </div>
+
+        <div class="full">
+          <label for="email">אימייל</label>
+          <input id="email" name="email" type="email" autocomplete="email" required aria-required="true" />
+          <div id="emailError" class="msg error" role="alert" hidden>כתובת אימייל לא תקינה.</div>
+        </div>
+
+        <div>
+          <label for="password">סיסמה</label>
+          <div class="pw-row">
+            <input id="password" name="password" type="password" autocomplete="new-password" required />
+            <button type="button" class="toggle-pass" id="togglePw" aria-pressed="false">הצג</button>
+          </div>
+          <div id="passwordError" class="msg error" role="alert" hidden>יש לעמוד בדרישות הסיסמה.</div>
+        </div>
+
+        <div>
+          <label for="confirm">אימות סיסמה</label>
+          <input id="confirm" name="confirm" type="password" autocomplete="new-password" required />
+          <div id="confirmError" class="msg error" role="alert" hidden>הסיסמאות אינן תואמות.</div>
+        </div>
+
+        <div class="full">
+          <label for="phone">טלפון (אופציונלי)</label>
+          <input id="phone" name="phone" type="text" inputmode="tel" autocomplete="tel" />
+          <div class="hint">הזן מספר טלפון לקבלת התראות ו־SMS.</div>
+        </div>
+
+        <div class="full pw-require" id="pwReq">
+          <strong>דרישות סיסמה:</strong>
+          <ul>
+            <li id="req-length">8 תווים לפחות</li>
+            <li id="req-lower">אות קטנה אחת לפחות</li>
+            <li id="req-upper">אות גדולה אחת לפחות</li>
+            <li id="req-digit">ספרה אחת לפחות</li>
+            <li id="req-special">תו מיוחד אחד לפחות (!@#...)</li>
+          </ul>
+        </div>
+
+        <div class="full terms">
+          <input id="terms" type="checkbox" required />
+          <label for="terms">קראתי ואני מסכים/ה לתנאי השימוש</label>
+        </div>
+
+        <button id="submitBtn" type="submit" disabled>הירשם</button>
+        <div id="formMessage" class="msg" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+
+
+  <script src="script.js"></script>
+</body>
+</html>
