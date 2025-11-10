@@ -1,63 +1,56 @@
-// login.js - לוגיקת ההתחברות בצד הלקוח
+// login.js
 
-const form = document.getElementById('loginForm');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const messageContainer = document.getElementById('messageContainer'); // נוסיף div לתצוגת הודעות
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
 
-// ודא שיש ב-login(54).html אלמנט עם id="messageContainer"
-// לדוגמה: <div id="messageContainer" class="msg" hidden></div> 
+    // רג'קס בסיסי לבדיקת תבנית אימייל
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
+    const MIN_PASSWORD_LENGTH = 6;
 
-form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    function validateForm() {
+        let isValid = true;
 
-    // 1. איסוף נתונים
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
-    if (!email || !password) {
-        messageContainer.textContent = 'נא להזין אימייל וסיסמה.';
-        messageContainer.className = 'msg error';
-        messageContainer.hidden = false;
-        return;
-    }
-
-    messageContainer.textContent = 'מתחבר...';
-    messageContainer.className = 'msg info';
-    messageContainer.hidden = false;
-
-
-    try {
-        // 2. שליחת בקשת POST לשרת
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        // 3. טיפול בתגובה מהשרת
-        if (response.ok) { // קוד 200 OK
-            messageContainer.textContent = data.message || 'התחברת בהצלחה!';
-            messageContainer.className = 'msg success';
-            // אם קיבלנו JWT, נשמור אותו כאן ב-localStorage או ב-Cookies
-            // if (data.token) { localStorage.setItem('token', data.token); }
-            
-            // הפנייה לדף הראשי לאחר 1.5 שניות
-            setTimeout(() => {
-                 window.location.href = '/dashboard.html'; // שנה ליעד המתאים
-            }, 1500);
-
+        // אימות אימייל
+        if (!emailPattern.test(emailInput.value)) {
+            emailError.textContent = 'אנא הזן כתובת אימייל חוקית.';
+            isValid = false;
         } else {
-            // קוד שגיאה (400)
-            messageContainer.textContent = data.msg || data.error || 'שגיאה בהתחברות.';
-            messageContainer.className = 'msg error';
+            emailError.textContent = ''; 
         }
 
-    } catch (error) {
-        console.error('Fetch error:', error);
-        messageContainer.textContent = 'שגיאה בחיבור לשרת.';
-        messageContainer.className = 'msg error';
+        // אימות סיסמה
+        if (passwordInput.value.length < MIN_PASSWORD_LENGTH) {
+            passwordError.textContent = `הסיסמה חייבת להיות באורך של ${MIN_PASSWORD_LENGTH} תווים לפחות.`;
+            isValid = false;
+        } else {
+            passwordError.textContent = ''; 
+        }
+
+        return isValid;
     }
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // חובה למנוע את השליחה המקורית של הטופס
+
+        if (validateForm()) {
+            // --- לוגיקת ניתוב לאחר אימות צד-לקוח מוצלח ---
+
+            // *הערה: ביישום אמיתי, כאן היית שולח את הנתונים לשרת 
+            // באמצעות Fetch API, ומבצע את הניתוב רק אם השרת החזיר הצלחה.
+            
+            // מכיוון שאנחנו עושים רק אימות לקוח:
+            
+            console.log('Client-side validation successful. Redirecting...');
+            
+            // ניתוב לדף homePage.html
+            window.location.href = 'homePage.html'; 
+            
+        } else {
+            console.log('Client-side validation failed.');
+        }
+    });
 });
