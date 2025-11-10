@@ -1,5 +1,5 @@
 const { connectDB } = require('./db');
-const User = require('./models/User'); // וודא שהנתיב נכון
+const User = require('./User'); // וודא שהנתיב נכון
 
 async function insertNewUser() {
     // 1. התחברות לבסיס הנתונים וסינכרון טבלאות
@@ -25,4 +25,3 @@ async function insertNewUser() {
 
 insertNewUser(); // הפעלת הפונקציה
 
-// זכור לבצע git add, git commit ו-git push לאחר שהקוד עובד!
