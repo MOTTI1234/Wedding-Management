@@ -91,19 +91,57 @@ document.getElementById('togglePw').addEventListener('click', () => {
 });
 
 
-form.addEventListener('submit', e => {
+form.addEventListener('submit', async (e) => { // הופך את הפונקציה ל-async
   e.preventDefault();
-  if (!validateFullName() || !validateEmail() || !validatePassword() || !validateConfirm()) {
+
+  // ודא שהאימות בצד הלקוח הצליח לפני שליחה
+  if (!validateFullName() || !validateEmail() || !validatePassword() || !validateConfirm() || !terms.checked) {
     formMessage.textContent = 'יש לתקן שגיאות לפני השליחה.';
     formMessage.className = 'msg error';
     return;
   }
+  
+  // הוספת נתוני טעינה וניטרול כפתור
+  formMessage.textContent = 'שולח...';
+  formMessage.className = 'msg hint';
+  submitBtn.disabled = true;
 
-  formMessage.textContent = 'נשלח בהצלחה!';
-  formMessage.className = 'msg ok';
-  form.reset();
-  updatePwUI({ length:false, lower:false, upper:false, digit:false, special:false });
-  updateSubmitState();
+  const userData = {
+    fullName: fullName.value,
+    email: email.value,
+    password: pw.value,
+    phone: document.getElementById('phone').value 
+  };
+
+  try {
+    // שליחת בקשת POST ל-API
+    const response = await fetch('/api/auth/register', { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+
+    if (response.ok) { // קוד 200-299: הרשמה מוצלחת
+      formMessage.textContent = 'ההרשמה הצליחה! מנתב לדף הבית...';
+      formMessage.className = 'msg success';
+      
+      // *** ניתוב לדף הבית (homePage.html) ***
+      window.location.href = 'homePage.html'; 
+    } else {
+      // כשלון מהשרת (לדוגמה: אימייל כבר קיים)
+      const errorData = await response.json().catch(() => ({ message: 'כשלון הרשמה כללי.' }));
+      
+      formMessage.textContent = errorData.message || 'ההרשמה נכשלה עקב שגיאת שרת.';
+      formMessage.className = 'msg error';
+      submitBtn.disabled = false; // אפשר שליחה מחדש
+    }
+  } catch (error) {
+    // כשלון רשת (השרת לא זמין)
+    console.error('Network error during registration:', error);
+    formMessage.textContent = 'שגיאת רשת. נסה שוב מאוחר יותר.';
+    formMessage.className = 'msg error';
+    submitBtn.disabled = false; // אפשר שליחה מחדש
+  }
 });
 
 updateSubmitState();
