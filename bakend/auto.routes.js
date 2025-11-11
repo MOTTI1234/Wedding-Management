@@ -2,8 +2,11 @@
 
 const express = require('express');
 const router = express.Router();
-// ייבוא פונקציית ההרשמה מהבקר (הקובץ הבא)
-const authController = require('./auth.controller.js'); 
+// ייבוא פונקציית ההרשמה מהבקר
+
+//console.log("🚩 [ROUTES] Auth router loaded."); // הדגל החדש
+// *** התיקון: אנו מייבאים את הבקר (auto.controller.js) ***
+const authController = require('./auto.controller'); 
 
 // מגדיר ראוט מסוג POST עבור ההרשמה.
 // כאשר לקוח שולח בקשת POST לכתובת זו, הפונקציה register מופעלת.

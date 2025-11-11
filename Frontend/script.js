@@ -24,58 +24,58 @@ const reqSpecial = document.getElementById('req-special');
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function checkPasswordRequirements(value) {
-  return {
-    length: value.length >= 8,
-    lower: /[a-zא-ת]/.test(value),
-    upper: /[A-Z]/.test(value),
-    digit: /\d/.test(value),
-    special: /[!@#$%^&*(),.?":{}|<>_\-+=~`\\\/\[\];']/.test(value)
-  };
+  return {
+    length: value.length >= 8,
+    lower: /[a-zא-ת]/.test(value),
+    upper: /[A-Z]/.test(value),
+    digit: /\d/.test(value),
+    special: /[!@#$%^&*(),.?":{}|<>_\-+=~`\\\/\[\];']/.test(value)
+  };
 }
 
 function updatePwUI(reqs) {
-  reqLength.classList.toggle('ok', reqs.length);
-  reqLower.classList.toggle('ok', reqs.lower);
-  reqUpper.classList.toggle('ok', reqs.upper);
-  reqDigit.classList.toggle('ok', reqs.digit);
-  reqSpecial.classList.toggle('ok', reqs.special);
+  reqLength.classList.toggle('ok', reqs.length);
+  reqLower.classList.toggle('ok', reqs.lower);
+  reqUpper.classList.toggle('ok', reqs.upper);
+  reqDigit.classList.toggle('ok', reqs.digit);
+  reqSpecial.classList.toggle('ok', reqs.special);
 }
 
 function validateFullName() {
-  if (!fullName.value.trim()) {
-    fullNameError.hidden = false;
-    return false;
-  }
-  fullNameError.hidden = true;
-  return true;
+  if (!fullName.value.trim()) {
+    fullNameError.hidden = false;
+    return false;
+  }
+  fullNameError.hidden = true;
+  return true;
 }
 
 function validateEmail() {
-  if (!emailRegex.test(email.value.trim())) {
-    emailError.hidden = false;
-    return false;
-  }
-  emailError.hidden = true;
-  return true;
+  if (!emailRegex.test(email.value.trim())) {
+    emailError.hidden = false;
+    return false;
+  }
+  emailError.hidden = true;
+  return true;
 }
 
 function validatePassword() {
-  const reqs = checkPasswordRequirements(pw.value);
-  updatePwUI(reqs);
-  const ok = Object.values(reqs).every(Boolean);
-  passwordError.hidden = ok;
-  return ok;
+  const reqs = checkPasswordRequirements(pw.value);
+  updatePwUI(reqs);
+  const ok = Object.values(reqs).every(Boolean);
+  passwordError.hidden = ok;
+  return ok;
 }
 
 function validateConfirm() {
-  const ok = pw.value === conf.value;
-  confirmError.hidden = ok;
-  return ok;
+  const ok = pw.value === conf.value;
+  confirmError.hidden = ok;
+  return ok;
 }
 
 function updateSubmitState() {
-  const ok = validateFullName() && validateEmail() && validatePassword() && validateConfirm() && terms.checked;
-  submitBtn.disabled = !ok;
+  const ok = validateFullName() && validateEmail() && validatePassword() && validateConfirm() && terms.checked;
+  submitBtn.disabled = !ok;
 }
 
 email.addEventListener('input', () => { validateEmail(); updateSubmitState(); });
@@ -86,62 +86,62 @@ terms.addEventListener('change', updateSubmitState);
 
 
 document.getElementById('togglePw').addEventListener('click', () => {
-  const isHidden = pw.type === 'password';
-  pw.type = conf.type = isHidden ? 'text' : 'password';
+  const isHidden = pw.type === 'password';
+  pw.type = conf.type = isHidden ? 'text' : 'password';
 });
 
 
-form.addEventListener('submit', async (e) => { // הופך את הפונקציה ל-async
-  e.preventDefault();
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  // ודא שהאימות בצד הלקוח הצליח לפני שליחה
-  if (!validateFullName() || !validateEmail() || !validatePassword() || !validateConfirm() || !terms.checked) {
-    formMessage.textContent = 'יש לתקן שגיאות לפני השליחה.';
-    formMessage.className = 'msg error';
-    return;
-  }
-  
-  // הוספת נתוני טעינה וניטרול כפתור
-  formMessage.textContent = 'שולח...';
-  formMessage.className = 'msg hint';
-  submitBtn.disabled = true;
+    // [--- קוד אימות נשאר זהה ---]
+    if (!validateFullName() || !validateEmail() || !validatePassword() || !validateConfirm() || !terms.checked) {
+        formMessage.textContent = 'יש לתקן שגיאות לפני השליחה.';
+        formMessage.className = 'msg error';
+        return;
+    }
+    
+    formMessage.textContent = 'שולח...';
+    formMessage.className = 'msg hint';
+    submitBtn.disabled = true;
 
-  const userData = {
-    fullName: fullName.value,
-    email: email.value,
-    password: pw.value,
-    phone: document.getElementById('phone').value 
-  };
+    // *** תיקון 1: שינוי fullName ל-name ***
+    const userData = {
+        name: fullName.value, 
+        email: email.value,
+        password: pw.value,
+        phone: document.getElementById('phone').value 
+    };
 
-  try {
-    // שליחת בקשת POST ל-API
-    const response = await fetch('/api/auth/register', { 
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
-    });
+    try {
+        // ************************************************************
+        // 🚩 התיקון: הוספת הכתובת המלאה 'http://localhost:3000'
+        // ************************************************************
+        const response = await fetch('http://localhost:3000/api/auth/register', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
 
-    if (response.ok) { // קוד 200-299: הרשמה מוצלחת
-      formMessage.textContent = 'ההרשמה הצליחה! מנתב לדף הבית...';
-      formMessage.className = 'msg success';
-      
-      // *** ניתוב לדף הבית (homePage.html) ***
-      window.location.href = 'homePage.html'; 
-    } else {
-      // כשלון מהשרת (לדוגמה: אימייל כבר קיים)
-      const errorData = await response.json().catch(() => ({ message: 'כשלון הרשמה כללי.' }));
-      
-      formMessage.textContent = errorData.message || 'ההרשמה נכשלה עקב שגיאת שרת.';
-      formMessage.className = 'msg error';
-      submitBtn.disabled = false; // אפשר שליחה מחדש
-    }
-  } catch (error) {
-    // כשלון רשת (השרת לא זמין)
-    console.error('Network error during registration:', error);
-    formMessage.textContent = 'שגיאת רשת. נסה שוב מאוחר יותר.';
-    formMessage.className = 'msg error';
-    submitBtn.disabled = false; // אפשר שליחה מחדש
-  }
+        if (response.ok) { 
+            formMessage.textContent = 'ההרשמה הצליחה! מנתב לדף הבית...';
+            formMessage.className = 'msg success';
+            window.location.href = 'homePage.html'; 
+        } else {
+            // *** תיקון 2: ציפייה ל-'msg' ושימוש ב-errorData.msg ***
+            const errorData = await response.json().catch(() => ({ msg: 'כשלון הרשמה כללי.' }));
+            
+            formMessage.textContent = errorData.msg || 'ההרשמה נכשלה עקב שגיאת שרת.';
+            formMessage.className = 'msg error';
+            submitBtn.disabled = false;
+        }
+    } catch (error) {
+        // כשלון רשת (נשאר זהה)
+        console.error('Network error during registration:', error);
+        formMessage.textContent = 'שגיאת רשת. נסה שוב מאוחר יותר.';
+        formMessage.className = 'msg error';
+        submitBtn.disabled = false; 
+    }
 });
 
 updateSubmitState();

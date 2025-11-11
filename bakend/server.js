@@ -1,34 +1,59 @@
 // server.js (הקוד המומלץ והמתוקן)
+require('dotenv').config(); // טוען את המשתנים מקובץ .env
+
 
 const express = require('express');
 const path = require('path'); // נחוץ לטיפול בנתיבים
-const { connectDB } = require('./db');
-const authRoutes = require('./auth.routes.js'); // ייבוא ראוטרים לאימות
+// שורה מתוקנת:
+const { connectDB, syncDB } = require('./db');
+const authRoutes = require('./auto.routes.js'); // *** תיקון: משתמש בנתיב auto.routes.js כפי שצוין ***
+const cors = require('cors'); // ייבוא של CORS
 
 const app = express();
 const PORT = process.env.PORT || 3000; // אפשרות להגדיר פורט דרך משתני סביבה
 
+// 1. הפעלת CORS (מאפשר גישה מכל מקור, פותר שגיאות רשת)
+
+app.use(cors({
+    origin: [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:5500', // המקור של Live Server (בדרך כלל localhost)
+        'http://127.0.0.1:5500'  // המקור של Live Server (בדרך כלל 127.0.0.1)
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+}));
+app.options(/.*/, cors());
+
 // --- Middlewares ---
-// 1. טיפול ב-JSON (מחליף את body-parser.json())
+// 2. טיפול ב-JSON
 app.use(express.json()); 
-// 2. הגשת קבצים סטטיים (HTML, CSS, JS)
+
+// 3. הגשת קבצים סטטיים (HTML, CSS, JS)
+// אם server.js בתוך /backend והקבצים בתוך /public, הנתיב צריך להיות:
+// app.use(express.static(path.join(__dirname, '..', 'public'))); 
+// אם public באותה רמה כמו server.js:
 app.use(express.static(path.join(__dirname, 'public'))); 
 
 // --- חיבור ראוטרים ---
 // כל הניתובים לאימות (הרשמה/התחברות) יתחילו ב-/api/auth
-app.use('/api/auth', authRoutes); 
+app.use('/api/auth', authRoutes); // משאיר את ה-URL כ- '/api/auth' כדי להתאים לקוד ה-JS של הלקוח
 
 // --- הפעלת השרת ---
 async function startServer() {
-    try {
-        await connectDB(); // מנסה להתחבר לבסיס הנתונים (PostgreSQL) ולסנכרן
-        app.listen(PORT, () => {
-            console.log(`Server running on http://localhost:${PORT}`);
-        });
-    } catch (error) {
-        console.error("Failed to start server:", error);
-        // אפשר להוסיף כאן לוגיקה ליציאה מהאפליקציה אם החיבור לבסיס הנתונים נכשל
-    }
+    try {
+        console.log("🚩 [SERVER] Calling connectDB()...");
+        await connectDB();
+        console.log("🚩 [SERVER] Calling syncDB()...");
+        await syncDB();
+        
+        app.listen(PORT, () => {
+            console.log(`✅ [SERVER] Server running on http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error("❌ [SERVER] Failed to start server:", error);
+    }
 }
 
 startServer();
