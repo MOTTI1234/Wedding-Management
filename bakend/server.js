@@ -6,7 +6,7 @@ const express = require('express');
 const path = require('path'); // נחוץ לטיפול בנתיבים
 // שורה מתוקנת:
 const { connectDB, syncDB } = require('./db');
-const authRoutes = require('./auto.routes.js'); // *** תיקון: משתמש בנתיב auto.routes.js כפי שצוין ***
+const authRoutes = require('./routes/auth.routes.js'); // *** תיקון: משתמש בנתיב auto.routes.js כפי שצוין ***
 const cors = require('cors'); // ייבוא של CORS
 
 const app = express();
