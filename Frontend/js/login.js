@@ -80,3 +80,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+
+
+// קוד זה חייב להיות בתוך login.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordField = document.getElementById('password');
+    const toggleButton = document.getElementById('togglePassword');
+
+    if (toggleButton && passwordField) {
+        toggleButton.addEventListener('click', function() {
+            // שינוי סוג הקלט בין 'password' ל-'text'
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            
+            // החלפת האייקון
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+    }
+
+    // ... לוגיקת שליחת הטופס הקיימת שלך ממשיכה כאן
+});

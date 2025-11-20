@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('./db'); // ייבוא אובייקט החיבור שיצרנו
+const { sequelize } = require('../db'); // ייבוא אובייקט החיבור שיצרנו
 
 const User = sequelize.define('User', {
     // השדה הראשי
