@@ -21,13 +21,18 @@ const newBudgetAmountInput = document.getElementById('newBudgetAmount');
 
 // משתנים גלובליים לשמירת הנתונים הפיננסיים
 let totalBudget = Number(localStorage.getItem('totalBudget')) || 250000;
-let totalPaid = Number(localStorage.getItem('totalPaid')) || 0;
-let totalPending = Number(localStorage.getItem('totalPending')) || 0;
-let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+let expenses = []; // מערך ריק, יאוכלס על ידי fetchExpenses()
 
 // =======================================================
 // פונקציות עזר
 // =======================================================
+
+/**
+ * מחלץ את ה-JWT מ-localStorage.
+ */
+function getToken() {
+    return localStorage.getItem('token'); 
+}
 
 /**
  * פונקציה לעיצוב מספר (סכום כסף).
@@ -80,9 +85,27 @@ function renderExpenseRow(expense) {
 // =======================================================
 
 /**
- * מעדכנת את כלל הסכומים המוצגים על המסך ואת פס ההתקדמות.
+ * מעדכנת את כלל הסכומים המוצגים על המסך ואת פס ההתקדמות, 
+ * על בסיס נתוני ההוצאות המעודכנים.
+ * @param {Array<Object>} currentExpenses - מערך ההוצאות הנוכחי
  */
-function updateAllSummaries() {
+function updateAllSummaries(currentExpenses) {
+    let totalPaid = 0;
+    let totalPending = 0;
+
+    // חישוב מחדש של הסיכומים מתוך נתוני השרת
+    currentExpenses.forEach(exp => {
+        if (exp.status === 'paid') {
+            totalPaid += exp.amount;
+        } else {
+            totalPending += exp.amount;
+        }
+    });
+    
+    // שמירת סכומים מעודכנים ב-localStorage רק לצורך הצגה מיידית אם רוצים
+    localStorage.setItem('totalPaid', totalPaid);
+    localStorage.setItem('totalPending', totalPending);
+
     const totalSpent = totalPaid + totalPending;
     const remainingBudget = totalBudget - totalSpent;
 
@@ -90,22 +113,61 @@ function updateAllSummaries() {
     totalPaidEl.textContent = formatCurrency(totalPaid);
     totalPendingEl.textContent = formatCurrency(totalPending);
     remainingBudgetEl.textContent = formatCurrency(remainingBudget);
-    remainingBudgetEl.parentElement.classList.remove('remaining');
-    remainingBudgetEl.parentElement.classList.remove('spent');
+    
+    remainingBudgetEl.parentElement.classList.remove('remaining', 'spent');
     remainingBudgetEl.parentElement.classList.add(remainingBudget >= 0 ? 'remaining' : 'spent');
 
 
     // חישוב אחוז ניצול
-    const usagePercent = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0;
+    const usagePercent = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+    const displayPercent = Math.min(100, usagePercent);
     
     progressTextEl.textContent = `% מהתקציב נוצל: ${usagePercent.toFixed(1)}%`;
-    progressBarEl.style.width = `${usagePercent}%`;
+    progressBarEl.style.width = `${displayPercent}%`;
     progressLabelEl.textContent = `${usagePercent.toFixed(1)}%`;
 
-    // שמירה ב-localStorage
-    localStorage.setItem('totalBudget', totalBudget);
-    localStorage.setItem('totalPaid', totalPaid);
-    localStorage.setItem('totalPending', totalPending);
+    progressBarEl.style.backgroundColor = usagePercent > 100 ? 'var(--error-color)' : 'var(--primary-color)';
+}
+
+/**
+ *  שולף את רשימת ההוצאות של המשתמש מהשרת.
+ */
+async function fetchExpenses() {
+    const token = getToken();
+    if (!token) {
+        // אם אין טוקן, נקה את הטבלה
+        expensesTableBody.innerHTML = '';
+        updateAllSummaries([]);
+        return console.error("Authentication token missing. Cannot fetch expenses.");
+    }
+    
+    try {
+        //  נניח שקיים ראוט GET /api/tasks/expenses לשליפה
+        const response = await fetch(`${API_BASE_URL}/expenses`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            expenses = data.expenses || []; // נניח שהשרת מחזיר { expenses: [...] }
+            
+            // רינדור הטבלה
+            expensesTableBody.innerHTML = ''; // ניקוי הטבלה
+            expenses.forEach(renderExpenseRow);
+            
+            // עדכון סכומי הסיכום
+            updateAllSummaries(expenses);
+        } else if (response.status === 401) {
+            alert('פג תוקף האימות. נא להתחבר מחדש.');
+            // ייתכן שצריך להפנות לדף התחברות
+        } else {
+            console.error('שגיאה בשליפת הוצאות:', response.status, await response.text());
+        }
+    } catch (error) {
+        console.error('שגיאת רשת בעת שליפת הוצאות:', error);
+    }
 }
 
 // לוגיקה לעדכון סכום התקציב
@@ -120,7 +182,11 @@ saveBudgetBtn.addEventListener('click', () => {
     
     if (newAmount > 0) {
         totalBudget = newAmount;
-        updateAllSummaries();
+        localStorage.setItem('totalBudget', totalBudget); // שמירת התקציב החדש
+        
+        // נדרש לשלוף שוב כדי לחשב את הסיכומים על בסיס התקציב החדש
+        fetchExpenses(); 
+        
         budgetInputArea.style.display = 'none';
         alert('התקציב הכולל עודכן בהצלחה!');
     } else {
@@ -137,36 +203,60 @@ saveBudgetBtn.addEventListener('click', () => {
  * מטפלת בשליחת הטופס, אוספת נתונים ומוסיפה שורה לטבלה.
  * @param {Event} e - אובייקט האירוע.
  */
-function handleFormSubmit(e) {
+async function handleFormSubmit(e) {
     e.preventDefault(); 
+    
+    const token = getToken();
+    if (!token) {
+        alert('אין אימות. נא להתחבר מחדש.');
+        return;
+    }
 
-    // 1. קבלת הערכים מהטופס
+    // 1. קבלת הערכים ואימות בסיסי
     const category = document.getElementById('expenseCategory').value;
     const amount = Number(document.getElementById('expenseAmount').value);
     const date = document.getElementById('expenseDate').value;
     const notes = document.getElementById('expenseNotes').value;
     const status = document.getElementById('expenseStatus').value;
-    
-    // 2. יצירת אובייקט הוצאה חדש
-    const newExpense = { category, amount, date, status, notes };
 
-    // 3. הוספת האובייקט למערך ושמירה
-    expenses.push(newExpense);
-    localStorage.setItem('expenses', JSON.stringify(expenses));
-
-    // 4. עדכון הסיכומים
-    if (status === 'paid') {
-        totalPaid += amount;
-    } else {
-        totalPending += amount;
+    if (!category || amount <= 0 || !date || !status) {
+        alert('נא למלא את כל השדות הנדרשים בסכום חיובי.');
+        return;
     }
-    updateAllSummaries();
     
-    // 5. רינדור השורה בטבלה
-    renderExpenseRow(newExpense);
+    const expenseData = { category, amount, date, status, notes };
 
-    // 6. איפוס הטופס
-    expenseForm.reset();
+    // 2. שליחת נתונים ל-Backend
+    try {
+        const response = await fetch(`${API_BASE_URL}/expenses`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // חובה לשלוח את הטוקן!
+            },
+            body: JSON.stringify(expenseData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`✅ ${result.message || 'הוצאה נשמרה בהצלחה!'}`);
+            expenseForm.reset();
+            
+            // 3. הצלחה: שליפה מחדש של כל הנתונים המעודכנים
+            fetchExpenses(); 
+
+        } else {
+            // שגיאה מהשרת (400, 401, 500)
+            const errorMessage = result.msg || result.error || 'שגיאה כללית בשמירת ההוצאה.';
+            alert(`❌ שגיאה: ${errorMessage}`);
+            console.error('Server error:', result);
+        }
+
+    } catch (error) {
+        console.error('שגיאת רשת בעת שליחת ההוצאה:', error);
+        alert('שגיאת רשת: לא ניתן להתחבר לשרת.');
+    }
 }
 
 // =======================================================
@@ -174,12 +264,9 @@ function handleFormSubmit(e) {
 // =======================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. טעינת ההוצאות הקיימות ורינדורן
-    expenses.forEach(renderExpenseRow);
+    // 1. קריאה ראשונה לטעינת הנתונים מהשרת
+    fetchExpenses();
     
-    // 2. עדכון סכומי הסיכום הראשוניים
-    updateAllSummaries();
-
-    // 3. האזנה לאירוע שליחת הטופס
+    // 2. האזנה לאירוע שליחת הטופס
     expenseForm.addEventListener('submit', handleFormSubmit);
 });
