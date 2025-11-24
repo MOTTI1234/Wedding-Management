@@ -6,9 +6,10 @@ const express = require('express');
 const path = require('path'); // נחוץ לטיפול בנתיבים
 // שורה מתוקנת:
 const { connectDB, syncDB } = require('./db');
-const authRoutes = require('./auto.routes.js'); // *** תיקון: משתמש בנתיב auto.routes.js כפי שצוין ***
+require('./models/associations.js');
+const authRoutes = require('./routes/auth.routes.js'); // *** תיקון: משתמש בנתיב auto.routes.js כפי שצוין ***
+const taskRoutes = require('./routes/task.routes.js');
 const cors = require('cors'); // ייבוא של CORS
-
 const app = express();
 const PORT = process.env.PORT || 3000; // אפשרות להגדיר פורט דרך משתני סביבה
 
@@ -39,6 +40,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // --- חיבור ראוטרים ---
 // כל הניתובים לאימות (הרשמה/התחברות) יתחילו ב-/api/auth
 app.use('/api/auth', authRoutes); // משאיר את ה-URL כ- '/api/auth' כדי להתאים לקוד ה-JS של הלקוח
+
+app.use('/api/tasks', taskRoutes);
+
+
 
 // --- הפעלת השרת ---
 async function startServer() {
