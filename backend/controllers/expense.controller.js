@@ -23,8 +23,21 @@ exports.getExpenses = async (req, res) => {
  */
 exports.createExpense = async (req, res) => {
     try {
+
+        // --- שורות דיבוג חדשות ---
+        console.log("🔍 [DEBUG] Full req.user object:", req.user);
+        
+        const UserId = req.user ? req.user.id : undefined;
+        console.log("🔍 [DEBUG] Extracted UserId:", UserId);
+
+        if (!UserId) {
+            console.error("❌ [ERROR] UserId is missing! Check auth middleware.");
+            return res.status(401).json({ msg: 'User ID missing from request' });
+        }
+        // --- סוף שורות דיבוג ---
+        
         const { category, amount, date, status, notes } = req.body;
-        const UserId = req.user.id;
+        //const UserId = req.user.id;
 
         if (!category || !amount || !date || !status) {
             return res.status(400).json({ msg: 'נא למלא את כל שדות החובה של ההוצאה.' });

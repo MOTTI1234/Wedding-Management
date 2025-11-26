@@ -22,7 +22,8 @@ const newBudgetAmountInput = document.getElementById('newBudgetAmount');
 const API_BASE_URL = "http://127.0.0.1:3000/api";
 
 // משתנים גלובליים לשמירת הנתונים הפיננסיים
-let totalBudget = Number(localStorage.getItem('totalBudget')) || 250000;
+let totalBudget = Number(sessionStorage.getItem('totalBudget')) || 250000;
+//let totalBudget = Number(localStorage.getItem('totalBudget')) || 250000;
 let expenses = []; // מערך ריק, יאוכלס על ידי fetchExpenses()
 
 // =======================================================
@@ -33,7 +34,8 @@ let expenses = []; // מערך ריק, יאוכלס על ידי fetchExpenses()
  * מחלץ את ה-JWT מ-localStorage.
  */
 function getToken() {
-    return localStorage.getItem('authToken'); 
+    //return localStorage.getItem('authToken'); 
+    return sessionStorage.getItem('authToken');
 }
 
 /**
@@ -79,6 +81,22 @@ function renderExpenseRow(expense) {
     
     // הערות (תא 4)
     newRow.insertCell(4).innerHTML = expense.notes || '-'; // מציג מקף אם אין הערות
+
+    const actionsCell = newRow.insertCell(5);
+    
+    // כפתור עריכה
+    const editBtn = document.createElement('button');
+    editBtn.className = 'action-btn edit-btn-icon';
+    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+    editBtn.onclick = () => openEditModal(expense); // קריאה לפונקציה שנצור מיד
+    actionsCell.appendChild(editBtn);
+
+    // כפתור מחיקה
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'action-btn delete-btn-icon';
+    deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+    deleteBtn.onclick = () => deleteExpense(expense.id); // קריאה לפונקציית מחיקה
+    actionsCell.appendChild(deleteBtn);
 }
 
 
@@ -105,8 +123,10 @@ function updateAllSummaries(currentExpenses) {
     });
     
     // שמירת סכומים מעודכנים ב-localStorage רק לצורך הצגה מיידית אם רוצים
-    localStorage.setItem('totalPaid', totalPaid);
-    localStorage.setItem('totalPending', totalPending);
+    sessionStorage.setItem('totalPaid', totalPaid);
+    sessionStorage.setItem('totalPending', totalPending);
+    //localStorage.setItem('totalPaid', totalPaid);
+    //localStorage.setItem('totalPending', totalPending);
 
     const totalSpent = totalPaid + totalPending;
     const remainingBudget = totalBudget - totalSpent;
@@ -184,7 +204,8 @@ saveBudgetBtn.addEventListener('click', () => {
     
     if (newAmount > 0) {
         totalBudget = newAmount;
-        localStorage.setItem('totalBudget', totalBudget); // שמירת התקציב החדש
+        sessionStorage.setItem('totalBudget', totalBudget);
+        //localStorage.setItem('totalBudget', totalBudget); // שמירת התקציב החדש
         
         // נדרש לשלוף שוב כדי לחשב את הסיכומים על בסיס התקציב החדש
         fetchExpenses(); 
@@ -258,6 +279,75 @@ async function handleFormSubmit(e) {
         console.error('שגיאת רשת בעת שליחת ההוצאה:', error);
         alert('שגיאת רשת: לא ניתן להתחבר לשרת.');
     }
+}
+
+// === הוספה כאן: לוגיקת מודל (Modal) ועריכה ===
+
+const editModal = document.getElementById('editModal');
+const closeModalBtn = document.querySelector('.close-modal');
+const editExpenseForm = document.getElementById('editExpenseForm');
+
+// סגירת המודל
+if(closeModalBtn) {
+    closeModalBtn.addEventListener('click', () => editModal.style.display = 'none');
+}
+window.addEventListener('click', (e) => {
+    if (e.target == editModal) editModal.style.display = 'none';
+});
+
+// פתיחת המודל ומילוי נתונים
+function openEditModal(expense) {
+    document.getElementById('editExpenseId').value = expense.id;
+    document.getElementById('editExpenseCategory').value = expense.category;
+    document.getElementById('editExpenseAmount').value = expense.amount;
+    document.getElementById('editExpenseDate').value = expense.date; 
+    document.getElementById('editExpenseStatus').value = expense.status;
+    document.getElementById('editExpenseNotes').value = expense.notes || '';
+    editModal.style.display = 'flex';
+}
+
+// שליחת עדכון לשרת (PUT)
+editExpenseForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = getToken();
+    const id = document.getElementById('editExpenseId').value;
+    
+    const updatedData = {
+        category: document.getElementById('editExpenseCategory').value,
+        amount: document.getElementById('editExpenseAmount').value,
+        date: document.getElementById('editExpenseDate').value,
+        status: document.getElementById('editExpenseStatus').value,
+        notes: document.getElementById('editExpenseNotes').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(updatedData)
+        });
+
+        if (response.ok) {
+            editModal.style.display = 'none';
+            fetchExpenses(); // רענון הנתונים
+            alert('עודכן בהצלחה');
+        } else {
+            alert('שגיאה בעדכון');
+        }
+    } catch (error) { console.error(error); }
+});
+
+// פונקציית מחיקה (DELETE)
+async function deleteExpense(id) {
+    if(!confirm('למחוק הוצאה זו?')) return;
+    const token = getToken();
+    try {
+        const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) fetchExpenses();
+    } catch (error) { console.error(error); }
 }
 
 // =======================================================
