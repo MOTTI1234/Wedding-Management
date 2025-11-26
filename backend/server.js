@@ -41,10 +41,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 // --- חיבור ראוטרים ---
 // כל הניתובים לאימות (הרשמה/התחברות) יתחילו ב-/api/auth
 app.use('/api/auth', authRoutes); // משאיר את ה-URL כ- '/api/auth' כדי להתאים לקוד ה-JS של הלקוח
-
 app.use('/api/tasks', taskRoutes);
 
 app.use('/api/expenses', expenseRoutes);
+const guestRoutes = require('./routes/guest.routes.js'); 
+app.use('/api/guests', guestRoutes);
 
 
 // --- הפעלת השרת ---
