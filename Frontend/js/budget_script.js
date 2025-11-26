@@ -19,6 +19,8 @@ const saveBudgetBtn = document.getElementById('saveBudgetBtn');
 const budgetInputArea = document.getElementById('budgetInputArea');
 const newBudgetAmountInput = document.getElementById('newBudgetAmount');
 
+const API_BASE_URL = "http://127.0.0.1:3000/api";
+
 // משתנים גלובליים לשמירת הנתונים הפיננסיים
 let totalBudget = Number(localStorage.getItem('totalBudget')) || 250000;
 let expenses = []; // מערך ריק, יאוכלס על ידי fetchExpenses()
@@ -31,7 +33,7 @@ let expenses = []; // מערך ריק, יאוכלס על ידי fetchExpenses()
  * מחלץ את ה-JWT מ-localStorage.
  */
 function getToken() {
-    return localStorage.getItem('token'); 
+    return localStorage.getItem('authToken'); 
 }
 
 /**
@@ -214,12 +216,11 @@ async function handleFormSubmit(e) {
 
     // 1. קבלת הערכים ואימות בסיסי
     const category = document.getElementById('expenseCategory').value;
-    const amount = Number(document.getElementById('expenseAmount').value);
-    const date = document.getElementById('expenseDate').value;
+    const amount = document.getElementById('expenseAmount').value;    const date = document.getElementById('expenseDate').value;
     const notes = document.getElementById('expenseNotes').value;
     const status = document.getElementById('expenseStatus').value;
 
-    if (!category || amount <= 0 || !date || !status) {
+    if (!category || !amount || !date || !status) {
         alert('נא למלא את כל השדות הנדרשים בסכום חיובי.');
         return;
     }
